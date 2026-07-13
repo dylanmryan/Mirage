@@ -1,0 +1,17 @@
+services:
+  mirage:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MIRAGE_LLM_BASE_URL: ${MIRAGE_LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      MIRAGE_LLM_API_KEY: ${MIRAGE_LLM_API_KEY:-ollama}
+      MIRAGE_MODEL: ${MIRAGE_MODEL:-gpt-4o-mini}
+      MIRAGE_DB_PATH: /data/mirage.sqlite
+    volumes:
+      - mirage-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  mirage-data:
