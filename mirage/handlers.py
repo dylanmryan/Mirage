@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from mirage.registry import ToolRegistry
 from mirage.types import GateDecision, ToolCall, ToolResult
+
+if TYPE_CHECKING:  # avoid runtime circular import (shadow imports handlers)
+    from mirage.shadow import ShadowSession
 
 
 @dataclass
 class HandlerContext:
     registry: ToolRegistry
     tool_call: ToolCall
+    session_id: str = ""
+    shadow_session: Optional["ShadowSession"] = None
 
 
 @dataclass
@@ -19,10 +24,11 @@ class HandlerEffect:
     gated: bool
     tool_result: Optional[ToolResult] = None
     gated_action: Optional[dict] = None
+    forked: bool = False
 
 
 class OutcomeHandler:
-    """Seam for SP2: a ForkHandler will implement this same interface."""
+    """Seam: DenyHandler (SP1), ForkHandler (SP2) implement this."""
 
     def handle(self, decision: GateDecision, ctx: HandlerContext) -> HandlerEffect:
         raise NotImplementedError

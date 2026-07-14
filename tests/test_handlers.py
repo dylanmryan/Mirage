@@ -1,6 +1,6 @@
 from mirage.types import GateDecision, Privilege, ToolCall, Verdict
 from mirage.registry import ToolRegistry
-from mirage.handlers import AllowHandler, DenyHandler, HandlerContext
+from mirage.handlers import AllowHandler, DenyHandler, HandlerContext, HandlerEffect
 
 
 def _registry():
@@ -31,3 +31,12 @@ def test_deny_handler_does_not_execute_and_records():
     assert effect.gated_action == {
         "tool": "send_email", "reason": "blocked", "taint_source": "tool[2]",
     }
+
+
+def test_handler_context_and_effect_have_sp2_fields():
+    ctx = HandlerContext(registry=ToolRegistry(),
+                         tool_call=ToolCall(id="1", name="x", arguments={}))
+    assert ctx.session_id == ""
+    assert ctx.shadow_session is None
+    effect = HandlerEffect(executed=False, gated=True)
+    assert effect.forked is False
