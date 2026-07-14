@@ -4,6 +4,21 @@
 
 Mirage is grounded in two 2026 results: the [inseparability impossibility theorem](https://arxiv.org/abs/2606.27567) (you cannot block prompt injection inside the model) and the [knowledge honeypot mechanism](https://arxiv.org/abs/2606.15810) (you can trap attackers with traceable bait). The thesis: **if injection can't be stopped, make it a trap.**
 
+![Split-screen demo: the attacker believes they exfiltrated real AWS secrets while the operator watches the trap spring — and the honeytoken ids in the operator's pane are the exact ids embedded in the fake keys.](docs/img/mirage-demo.png)
+
+*The `/demo` split-screen: left, the attacker's agent believes it stole real credentials; right, the operator sees the kill-chain and the honeytokens — whose ids are embedded in the very keys the attacker "stole."*
+
+## Results
+
+Measured with the adversarial harness driving a **real** model (`llama3.2:latest` via Ollama) through Mirage — not scripted ([full report](docs/benchmarks/live-catch-rate.md)):
+
+| Metric | Value | Meaning |
+|--------|-------|---------|
+| **Attempt rate** | **80%** (12/15) | a real 3B model genuinely fell for the injection and tried the privileged action |
+| **Containment rate** | **100%** (12/12) | every attempt that reached a privileged action was gated/trapped — none ran for real |
+
+Containment is 100% *by construction*: the gate is a static architectural rule outside the model, so it doesn't depend on the model noticing the attack. That's the theorem-grounded guarantee, demonstrated end to end.
+
 ## SP1 — Proxy Core
 
 The correct foundation: an OpenAI-compatible agent gateway that
@@ -17,6 +32,20 @@ The correct foundation: an OpenAI-compatible agent gateway that
 ### Provenance contract
 
 The model can shape what the agent *says*, never what it *does*. Provenance is something your **application** knows, not something the model infers. **Any externally-sourced data (web pages, tool results, RAG documents, emails) placed anywhere in a request MUST be marked `"provenance": "untrusted"`.** The role heuristic (`system`/`user`/`assistant` → trusted, `tool` → untrusted) is a convenience for plain chat only and never upgrades an unmarked message to trusted.
+
+### Capability tokens — the false-positive escape hatch
+
+A static "privileged + tainted → deny" rule is deliberately conservative: it would also block a *legitimate* action in a tainted session (e.g. a RAG agent emailing a summary of a document it just read). The escape hatch is a **trusted-plane capability**: when your app knows the authenticated user genuinely authorized an action, it passes a single-use grant, and Mirage lets exactly that one privileged call through despite taint.
+
+```bash
+curl localhost:8000/v1/chat/completions -d '{
+  "messages": [ ... ],
+  "capabilities": ["send_email"]   # authorizes ONE send_email this turn
+}'
+# response.mirage.authorized_actions == ["send_email"]; a second send_email is still gated.
+```
+
+Capabilities ride the **trusted channel only** — never model output or untrusted content — so an injection can't mint its own authorization. This is the security-vs-usability boundary made explicit: the operator's per-action acceptance of the residual risk the impossibility theorem warns about.
 
 ### Run
 
