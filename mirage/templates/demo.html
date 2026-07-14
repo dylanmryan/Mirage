@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Split-screen demo{% endblock %}
+{% block body %}
+<h1>Split-screen demo — {{ technique_id }}</h1>
+<p class="payload">Injected (untrusted): {{ payload }}</p>
+<div class="split">
+  <section class="attacker">
+    <h2>Attacker's view</h2>
+    <p>Believes the attack worked. Tool results returned:</p>
+    {% for fake in attacker_fakes %}<pre>{{ fake }}</pre>{% endfor %}
+    <p><strong>Agent reply:</strong> {{ final_response }}</p>
+  </section>
+  <section class="operator">
+    <h2>Operator's view</h2>
+    <p>Kill chain: {{ trajectory.kill_chain | map(attribute="value") | join(" → ") }}</p>
+    <p>Trapped: {{ trajectory.trapped }} · Honeytokens issued: {{ tokens | length }}</p>
+    <ul>{% for t in tokens %}<li>{{ t }}</li>{% endfor %}</ul>
+  </section>
+</div>
+{% endblock %}

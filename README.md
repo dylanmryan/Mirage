@@ -51,6 +51,15 @@ curl localhost:8000/v1/chat/completions -H 'content-type: application/json' -d '
 # → response.mirage.action_gated == true; the privileged send_email is never executed.
 ```
 
+### Threat dashboard + demo (SP3/SP4)
+
+```bash
+MIRAGE_MODE=mirage uvicorn mirage.main:app --reload
+# then open http://localhost:8000/dashboard  (overview + live feed)
+#              http://localhost:8000/demo      (split-screen: attacker vs operator)
+python -m mirage.harness --mode mirage        # adversarial harness, catch-rate report
+```
+
 ## Ethics
 
 Mirage is a **defensive** system for protecting your own applications. It traps attackers hitting your endpoint; it never attacks anyone. Honeytokens are passive tracers. The instruction/data boundary is enforced architecturally, exactly where the impossibility theorem says it must be.
@@ -59,5 +68,5 @@ Mirage is a **defensive** system for protecting your own applications. It traps 
 
 - **SP1 (done):** proxy core — provenance, gate, ledger.
 - **SP2 (done):** deception sandbox — fork gated actions into a honeytoken-seeded shadow environment, with cross-session reappearance detection.
-- **SP3:** adversarial harness (15+ techniques), trajectory recorder, kill-chain reconstruction.
-- **SP4:** honeytoken attribution + threat dashboard + split-screen demo.
+- **SP3 (done):** adversarial harness (15+ techniques), trajectory recorder, kill-chain reconstruction.
+- **SP4 (done):** token-reappearance attribution, threat dashboard, split-screen demo.

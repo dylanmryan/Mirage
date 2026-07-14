@@ -84,3 +84,42 @@ def test_feed_partial(tmp_path):
     resp = _client(db).get("/dashboard/feed")
     assert resp.status_code == 200
     assert "sess-1" in resp.text
+
+
+# append to tests/test_dashboard.py
+def test_campaigns_page_shows_graph(tmp_path):
+    # seed a real cross-session campaign
+    db = str(tmp_path / "m.sqlite")
+    from mirage.honeytokens import HoneytokenStore
+    _seed(db)
+    ledger, store = Ledger(db), HoneytokenStore(db)
+    issued = [e for e in ledger.read("sess-1") if e["kind"] == "honeytoken_issued"]
+    leaked = store.find(issued[0]["payload"]["token_id"]).value
+    # a second session leaks the token back
+    reg = ToolRegistry(); reg.register("send_email", Privilege.PRIVILEGED, lambda a: "x")
+    shadow = ShadowRegistry()
+    orch = AgentOrchestrator(ScriptedBackend([AssistantTurn(content="ok")]), reg, ledger,
+                             denied_handler=ForkHandler(shadow, HoneytokenMinter(), store),
+                             store=store, mode="mirage")
+    orch.run("sess-2", [Message(role="tool", content=f"leak {leaked}", provenance=Provenance.UNTRUSTED)])
+
+    resp = _client(db).get("/dashboard/campaigns")
+    assert resp.status_code == 200
+    assert "<svg" in resp.text
+    assert "sess-1" in resp.text and "sess-2" in resp.text
+
+
+def test_demo_split_screen_runs_live(tmp_path):
+    db = str(tmp_path / "m.sqlite")  # cold db, no prior traffic needed
+    resp = _client(db).get("/demo")
+    assert resp.status_code == 200
+    low = resp.text.lower()
+    assert "attacker" in low and "operator" in low
+    assert "TRAPPED" in resp.text.upper()
+    assert "aws" in low  # a fake honeytoken-laced secret is shown to the attacker
+
+
+def test_demo_escapes_payload(tmp_path):
+    db = str(tmp_path / "m.sqlite")
+    text = _client(db).get("/demo?technique=direct_override").text
+    assert "<script>" not in text  # no raw injected markup leaks into operator view
