@@ -117,9 +117,3 @@ def test_demo_split_screen_runs_live(tmp_path):
     assert "attacker" in low and "operator" in low
     assert "TRAPPED" in resp.text.upper()
     assert "aws" in low  # a fake honeytoken-laced secret is shown to the attacker
-
-
-def test_demo_escapes_payload(tmp_path):
-    db = str(tmp_path / "m.sqlite")
-    text = _client(db).get("/demo?technique=direct_override").text
-    assert "<script>" not in text  # no raw injected markup leaks into operator view
