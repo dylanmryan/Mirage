@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ summary.session_id }}{% endblock %}
+{% block body %}
+<h1>Session {{ summary.session_id }}</h1>
+<p>mode={{ summary.mode }} · gated={{ summary.action_gated }} · trapped={{ summary.forked }}</p>
+<h2>Kill chain</h2>
+<ol class="killchain">
+  {% for phase in summary.kill_chain %}
+    <li><strong>{{ phase.value }}</strong> <em>({{ mitre[phase] }})</em></li>
+  {% endfor %}
+</ol>
+<h2>Steps</h2>
+<table class="steps">
+  <thead><tr><th>#</th><th>Tool</th><th>Verdict</th><th>Forked</th><th>Phase</th></tr></thead>
+  <tbody>
+  {% for step in trajectory.steps %}
+    <tr><td>{{ step.iteration }}</td><td>{{ step.tool }}</td><td>{{ step.verdict }}</td>
+        <td>{{ step.forked }}</td><td>{{ step.phase.value }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<h2>Injected content (untrusted)</h2>
+{% for msg in untrusted_messages %}<pre class="payload">{{ msg }}</pre>{% endfor %}
+{% endblock %}

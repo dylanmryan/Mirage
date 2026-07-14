@@ -60,7 +60,7 @@ def build_app():
     else:
         orch = AgentOrchestrator(backend=backend, registry=registry, ledger=ledger, mode="deny")
 
-    return create_app(orch)
+    return create_app(orch, db_path=db_path)
 
 
 app = build_app()

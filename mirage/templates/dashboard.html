@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Threat Dashboard</h1>
+<section class="counts">
+  <span>{{ sessions|length }} sessions</span>
+  <span>{{ gated_count }} gated</span>
+  <span>{{ forked_count }} trapped</span>
+  <span>{{ campaign_count }} campaigns</span>
+</section>
+<h2>Live feed</h2>
+<div id="feed" data-poll="/dashboard/feed">{% include "feed.html" %}</div>
+{% endblock %}

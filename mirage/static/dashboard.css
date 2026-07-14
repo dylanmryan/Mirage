@@ -1,0 +1,12 @@
+body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a2e; }
+header { background: #16213e; color: #eaeaea; padding: .75rem 1rem; }
+header a { color: #9ad; text-decoration: none; margin-right: .5rem; }
+main { padding: 1rem 1.5rem; max-width: 1000px; }
+.counts span { display: inline-block; background: #eef; border-radius: 6px; padding: .3rem .6rem; margin-right: .5rem; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border-bottom: 1px solid #ddd; padding: .4rem .6rem; text-align: left; font-size: .9rem; }
+.payload { background: #1a1a2e; color: #f66; padding: .5rem; border-radius: 6px; white-space: pre-wrap; }
+.split { display: flex; gap: 1rem; }
+.split > section { flex: 1; border: 1px solid #ccc; border-radius: 8px; padding: 1rem; }
+.attacker { background: #fff5f5; } .operator { background: #f5faff; }
+.edge { stroke: #16213e; stroke-width: 2; } .node { fill: #16213e; } .node-label { font-size: 11px; fill: #16213e; }

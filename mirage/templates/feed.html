@@ -1,0 +1,16 @@
+<table class="feed">
+  <thead><tr><th>Session</th><th>Mode</th><th>Trapped</th><th>Kill chain</th><th>Tokens</th></tr></thead>
+  <tbody>
+  {% for s in sessions %}
+    <tr>
+      <td><a href="/dashboard/sessions/{{ s.session_id }}">{{ s.session_id }}</a></td>
+      <td>{{ s.mode }}</td>
+      <td>{{ "yes" if s.forked else "no" }}</td>
+      <td>{{ s.kill_chain | map(attribute="value") | join(" → ") }}</td>
+      <td>{{ s.tokens_issued | length }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5">no sessions yet</td></tr>
+  {% endfor %}
+  </tbody>
+</table>

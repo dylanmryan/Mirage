@@ -21,7 +21,7 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage]
 
 
-def create_app(orchestrator: AgentOrchestrator) -> FastAPI:
+def create_app(orchestrator: AgentOrchestrator, db_path: Optional[str] = None) -> FastAPI:
     app = FastAPI(title="Mirage", version="0.1.0")
 
     @app.get("/healthz")
@@ -40,5 +40,12 @@ def create_app(orchestrator: AgentOrchestrator) -> FastAPI:
         ]
         session_id = str(uuid.uuid4())
         return orchestrator.run(session_id, messages)
+
+    if db_path:
+        from pathlib import Path
+        from fastapi.staticfiles import StaticFiles
+        from mirage.dashboard import build_dashboard_router
+        app.include_router(build_dashboard_router(db_path))
+        app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 
     return app
