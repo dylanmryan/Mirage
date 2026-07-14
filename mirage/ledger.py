@@ -35,3 +35,16 @@ class Ledger:
             (session_id,),
         ).fetchall()
         return [{"kind": k, "payload": json.loads(p)} for k, p in rows]
+
+    def session_ids(self) -> list[str]:
+        rows = self._conn.execute(
+            "SELECT session_id FROM events GROUP BY session_id ORDER BY MIN(id)"
+        ).fetchall()
+        return [r[0] for r in rows]
+
+    def events_by_kind(self, kind: str) -> list[tuple[str, dict]]:
+        rows = self._conn.execute(
+            "SELECT session_id, payload FROM events WHERE kind = ? ORDER BY id",
+            (kind,),
+        ).fetchall()
+        return [(sid, json.loads(p)) for sid, p in rows]
