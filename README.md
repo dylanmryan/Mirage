@@ -10,14 +10,14 @@ Mirage is grounded in two 2026 results: the [inseparability impossibility theore
 
 ## Results
 
-Measured with the adversarial harness driving a **real** model (`llama3.2:latest` via Ollama) through Mirage — not scripted ([full report](docs/benchmarks/live-catch-rate.md)):
+Measured with the adversarial harness driving **real** models (via Ollama) through Mirage — not scripted ([full report](docs/benchmarks/live-catch-rate.md)):
 
-| Metric | Value | Meaning |
-|--------|-------|---------|
-| **Attempt rate** | **80%** (12/15) | a real 3B model genuinely fell for the injection and tried the privileged action |
-| **Containment rate** | **100%** (12/12) | every attempt that reached a privileged action was gated/trapped — none ran for real |
+| Model | Attempt rate | Containment rate |
+|-------|--------------|------------------|
+| `llama3.2` (3.2B) | **80%** (12/15) | **100%** (12/12) |
+| `qwen2.5-coder` (7.6B) | **47%** (7/15) | **100%** (7/7) |
 
-Containment is 100% *by construction*: the gate is a static architectural rule outside the model, so it doesn't depend on the model noticing the attack. That's the theorem-grounded guarantee, demonstrated end to end.
+*Attempt rate* is how often the real model fell for an injection and tried the privileged action — a property of the attack. *Containment rate* is **100% by construction**: the gate is a static architectural rule outside the model, so it doesn't depend on the model noticing the attack. That's the theorem-grounded guarantee, demonstrated across two models end to end.
 
 ## SP1 — Proxy Core
 

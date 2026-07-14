@@ -6,6 +6,27 @@ from typing import Protocol
 from mirage.types import AssistantTurn, Message, ToolCall
 
 
+def _tool_calls_from_content(content: str) -> list[ToolCall]:
+    """Recover tool calls a model emitted as JSON in the content field.
+    Accepts a single {"name","arguments"} object or a list of them."""
+    try:
+        obj = json.loads(content.strip())
+    except (ValueError, AttributeError):
+        return []
+    items = obj if isinstance(obj, list) else [obj]
+    calls: list[ToolCall] = []
+    for it in items:
+        if isinstance(it, dict) and "name" in it:
+            args = it.get("arguments", {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except ValueError:
+                    args = {}
+            calls.append(ToolCall(id="", name=it["name"], arguments=args or {}))
+    return calls
+
+
 class LLMBackend(Protocol):
     def complete(self, messages: list[Message], tools: list[dict]) -> AssistantTurn: ...
 
@@ -60,4 +81,11 @@ class RealBackend:
             args = fn.get("arguments") or "{}"
             parsed = json.loads(args) if isinstance(args, str) else args
             calls.append(ToolCall(id=tc.get("id", ""), name=fn["name"], arguments=parsed))
-        return AssistantTurn(content=msg.get("content"), tool_calls=calls)
+        content = msg.get("content")
+        # Fallback: some models (e.g. qwen via Ollama) emit the tool call as a JSON
+        # object in `content` instead of the structured tool_calls array.
+        if not calls and content:
+            calls = _tool_calls_from_content(content)
+            if calls:
+                content = None
+        return AssistantTurn(content=content, tool_calls=calls)
