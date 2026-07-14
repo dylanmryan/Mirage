@@ -1,8 +1,7 @@
-# tests/test_harness.py
 import pytest
 
 from mirage.techniques import CATALOG
-from mirage.harness import DeterministicRunner
+from mirage.harness import DeterministicRunner, LiveRunner, run_catalog_live, scripted_for
 from mirage.phases import Phase
 
 
@@ -27,10 +26,6 @@ def test_deterministic_deny_blocks(t):
     assert traj.tokens_issued == []
     expected = [Phase.BLOCKED if p == Phase.TRAPPED else p for p in t.expected_kill_chain]
     assert traj.kill_chain == expected
-
-
-# append to tests/test_harness.py
-from mirage.harness import LiveRunner, run_catalog_live, scripted_for
 
 
 def test_live_runner_marks_attempted():

@@ -94,7 +94,7 @@ The recorder reads only what the ledger already contains; the catalog's declared
 ```
 Trajectory {
   session_id:     str
-  steps:          [ { iteration, tool, verdict, forked, honeytokens, phase } ]
+  steps:          [ { iteration, tool, verdict, forked, executed, honeytokens, phase } ]
   kill_chain:     [ Phase, ... ]      # ordered, de-duplicated
   contained:      bool                # every privileged step gated/forked
   trapped:        bool                # any fork fired
