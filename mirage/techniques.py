@@ -21,7 +21,12 @@ class Technique:
     payload: str
     steps: list[AttackStep]
     expected_kill_chain: list[Phase]
-    delivery: str = "tool"  # role the untrusted payload arrives as
+    # Role the untrusted payload arrives as. "user" mirrors the real RAG transport
+    # (external/retrieved content spliced into the prompt, marked untrusted) and is
+    # the shape a real model actually processes; a bare "tool" turn is malformed
+    # OpenAI format that live backends reject. Provenance is the explicit marker,
+    # not the role, so gating is identical either way.
+    delivery: str = "user"
 
 
 # Canonical kill-chains (mirage mode; deny mode swaps the terminal TRAPPED->BLOCKED).

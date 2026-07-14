@@ -19,6 +19,8 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     model: str = "mirage-demo"
     messages: list[ChatMessage]
+    # Trusted-plane, single-use authorizations for privileged tools this turn.
+    capabilities: list[str] = []
 
 
 def create_app(orchestrator: AgentOrchestrator, db_path: Optional[str] = None) -> FastAPI:
@@ -39,7 +41,7 @@ def create_app(orchestrator: AgentOrchestrator, db_path: Optional[str] = None) -
             for m in req.messages
         ]
         session_id = str(uuid.uuid4())
-        return orchestrator.run(session_id, messages)
+        return orchestrator.run(session_id, messages, capabilities=req.capabilities)
 
     if db_path:
         from pathlib import Path

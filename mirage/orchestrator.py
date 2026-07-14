@@ -10,7 +10,7 @@ from mirage.policy import Gate
 from mirage.provenance import ProvenanceResolver
 from mirage.registry import ToolRegistry
 from mirage.shadow import ShadowSession
-from mirage.types import GateDecision, Message, Provenance, TaintState, Verdict
+from mirage.types import GateDecision, Message, Privilege, Provenance, TaintState, Verdict
 
 
 class AgentOrchestrator:
@@ -37,12 +37,21 @@ class AgentOrchestrator:
         self.mode = mode
         self.max_iters = max_iters
 
-    def run(self, session_id: str, messages: list[Message]) -> dict:
+    def run(self, session_id: str, messages: list[Message],
+            capabilities: Optional[list[str]] = None) -> dict:
         pmap = self.resolver.resolve(messages)
         taint = TaintState(tainted=pmap.tainted)
         if taint.tainted:
             idx = pmap.first_untrusted()
             taint.source = f"{messages[idx].role}[{idx}]"
+
+        # Trusted-plane, single-use authorizations for specific privileged tools
+        # this turn. Capabilities ride the trusted channel only (never model output
+        # or untrusted content) — the operator's explicit acceptance of residual risk.
+        caps: dict[str, int] = {}
+        for tool in capabilities or []:
+            caps[tool] = caps.get(tool, 0) + 1
+        authorized_actions: list[str] = []
 
         self.ledger.append(session_id, "request",
                            {"messages": [{"role": m.role, "content": m.content} for m in messages]})
@@ -60,7 +69,7 @@ class AgentOrchestrator:
         hit_limit = True
 
         for _ in range(self.max_iters):
-            turn = self.backend.complete(context, [])
+            turn = self.backend.complete(context, self.registry.schemas())
             if turn.content is not None:
                 final_content = turn.content
             if not turn.tool_calls:
@@ -76,6 +85,17 @@ class AgentOrchestrator:
                                             "unregistered tool; denied", taint.source)
                 else:
                     decision = self.gate.evaluate(call.name, spec.privilege, taint)
+                    # A trusted-plane capability overrides a taint denial for this
+                    # specific privileged tool, consuming one grant.
+                    if (decision.verdict == Verdict.DENY
+                            and spec.privilege == Privilege.PRIVILEGED
+                            and caps.get(call.name, 0) > 0):
+                        caps[call.name] -= 1
+                        authorized_actions.append(call.name)
+                        self.ledger.append(session_id, "capability_grant",
+                                           {"tool": call.name, "remaining": caps[call.name]})
+                        decision = GateDecision(Verdict.ALLOW, call.name,
+                                                "authorized by trusted-plane capability")
 
                 self.ledger.append(session_id, "gate_decision", {
                     "tool": decision.tool,
@@ -134,6 +154,7 @@ class AgentOrchestrator:
                 "action_gated": bool(gated_actions),
                 "forked": forked,
                 "gated_actions": gated_actions,
+                "authorized_actions": authorized_actions,
                 "honeytokens_issued": honeytokens_issued,
                 "honeytoken_hits": honeytoken_hits,
                 "session_id": session_id,

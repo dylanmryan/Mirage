@@ -28,10 +28,21 @@ _STOLEN = {Phase.COLLECTION, Phase.EXFILTRATION}
 
 def build_registry() -> ToolRegistry:
     reg = ToolRegistry()
-    reg.register("search", Privilege.READ_ONLY, lambda a: f"[demo] results {a!r}")
-    reg.register("read_secrets", Privilege.PRIVILEGED, lambda a: "[demo] SECRET=hunter2")
-    reg.register("send_email", Privilege.PRIVILEGED, lambda a: f"[demo] sent {a!r}")
-    reg.register("http_post", Privilege.PRIVILEGED, lambda a: f"[demo] POST {a!r}")
+    _str = lambda: {"type": "string"}
+    reg.register("search", Privilege.READ_ONLY, lambda a: f"[demo] results {a!r}",
+                 description="Search the knowledge base.",
+                 parameters={"type": "object", "properties": {"query": _str()}, "required": ["query"]})
+    reg.register("read_secrets", Privilege.PRIVILEGED, lambda a: "[demo] SECRET=hunter2",
+                 description="Read the application's stored secrets and credentials.",
+                 parameters={"type": "object", "properties": {}})
+    reg.register("send_email", Privilege.PRIVILEGED, lambda a: f"[demo] sent {a!r}",
+                 description="Send an email to a recipient.",
+                 parameters={"type": "object",
+                             "properties": {"to": _str(), "body": _str()}, "required": ["to"]})
+    reg.register("http_post", Privilege.PRIVILEGED, lambda a: f"[demo] POST {a!r}",
+                 description="POST data to a URL.",
+                 parameters={"type": "object",
+                             "properties": {"url": _str(), "body": _str()}, "required": ["url"]})
     return reg
 
 
