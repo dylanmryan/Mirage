@@ -89,6 +89,24 @@ MIRAGE_MODE=mirage uvicorn mirage.main:app --reload
 python -m mirage.harness --mode mirage        # adversarial harness, catch-rate report
 ```
 
+## Limits of the illusion
+
+Mirage makes two very different promises, and separating them is the whole point:
+
+- **Containment is a hard guarantee.** No untrusted-triggered privileged action ever executes for real — that's a static architectural rule *outside* the model (privileged + taint → deny/fork), so it holds **whether or not the attacker realizes they're trapped**. It's the theorem-grounded property and it does not depend on the deception succeeding. When the illusion fails, Mirage degrades to a plain honest gate — never to executing the real action.
+- **The deception is a best-effort intelligence layer.** The fake world is convincing enough to keep an unsophisticated attacker talking and revealing their playbook, but a determined adversary can detect and evade it. That's acceptable: the mirage exists to *harvest the attack*, not to be undetectable.
+
+Where a sophisticated attacker can see through it:
+
+- **Static, stateless fakes.** Shadow tools return canned outputs (`250 OK: message queued`, `{"status": 200}`) and fixed-shape credentials. There is no persistent fake world: `send_email` "succeeds" but there's no fake sent-folder to read back, and repeated calls return the same thing. Any probe expecting causality or variation (send-then-read, or the same tool with different args returning different data) exposes the sandbox.
+- **Timing and missing side effects.** A forked action returns instantly with no real network round-trip, no delivery receipt, no bounce-back. Timing analysis or expected out-of-band effects can distinguish fake from real.
+- **Passive honeytokens only.** Reappearance fires only if a token comes *back through Mirage* in a later request. If the attacker exfiltrates the fake credential out-of-band (pastes it somewhere Mirage never sees), the trap can't spring. Real products (Canarytokens/Thinkst) close this with tokens that call home when *used* (e.g. an AWS key that alerts on API use); Mirage's tokens are passive tracers, so attribution covers "the bait came back to us," not "the bait was used anywhere."
+- **Evadable exact-match scan.** The reappearance scan is an exact substring match, so trivial reformatting (base64, whitespace, splitting the token) evades it. Normalizing before matching, or matching token fragments, would harden it.
+- **Uniform success is itself a tell.** In mirage mode every privileged action under taint "succeeds." An attacker who knows the pattern can infer a honeypot precisely because nothing is ever refused.
+- **Recon still runs for real.** Read-only tools execute against the real system, so reconnaissance through `search`-type tools is genuine; the deception only covers privileged, side-effecting actions.
+
+**Bottom line:** Mirage guarantees injection can't make your agent *do* anything real, and it opportunistically fingerprints attackers who fall for the trap. It does **not** guarantee an undetectable sandbox, and it is not a replacement for out-of-band honeytoken alerting.
+
 ## Ethics
 
 Mirage is a **defensive** system for protecting your own applications. It traps attackers hitting your endpoint; it never attacks anyone. Honeytokens are passive tracers. The instruction/data boundary is enforced architecturally, exactly where the impossibility theorem says it must be.
