@@ -89,6 +89,8 @@ MIRAGE_MODE=mirage uvicorn mirage.main:app --reload
 python -m mirage.harness --mode mirage        # adversarial harness, catch-rate report
 ```
 
+![Threat dashboard: recent attack sessions with their kill-chains, trapped status, and honeytoken counts, plus a campaign linked by token reappearance.](docs/img/mirage-dashboard.png)
+
 ## Limits of the illusion
 
 Mirage makes two very different promises, and separating them is the whole point:
@@ -117,3 +119,9 @@ Mirage is a **defensive** system for protecting your own applications. It traps 
 - **SP2 (done):** deception sandbox — fork gated actions into a honeytoken-seeded shadow environment, with cross-session reappearance detection.
 - **SP3 (done):** adversarial harness (15+ techniques), trajectory recorder, kill-chain reconstruction.
 - **SP4 (done):** token-reappearance attribution, threat dashboard, split-screen demo.
+
+**Beyond the roadmap:** capability tokens (the false-positive escape hatch), real tool-schema plumbing + measured two-model catch rates, cross-model tool-call parsing, and the honest [limits of the illusion](#limits-of-the-illusion).
+
+## License
+
+[MIT](LICENSE) © Dylan Ryan.
